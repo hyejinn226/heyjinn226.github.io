@@ -1,0 +1,1105 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>HEARTBEAT STAR :: OBSERVATORY</title>
+<style>
+:root{
+  --bg:#02040a;
+  --bg2:#050a13;
+  --panel:rgba(8,17,31,.72);
+  --line:#132b4a;
+  --line2:#1d3b5f;
+  --text:#edf5ff;
+  --dim:#8291a7;
+  --cyan:#00efff;
+  --cyan2:#63f7ff;
+  --amber:#ffca28;
+  --pink:#ff83c8;
+  --mono:"IBM Plex Mono","Consolas","Courier New",monospace;
+  --sans:Inter,Pretendard,"Noto Sans KR",system-ui,sans-serif;
+}
+
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;
+  color:var(--text);
+  background:
+    radial-gradient(circle at 50% 8%,rgba(0,239,255,.08),transparent 30%),
+    radial-gradient(circle at 80% 60%,rgba(255,202,40,.035),transparent 25%),
+    var(--bg);
+  font-family:var(--sans);
+  line-height:1.75;
+  overflow-x:hidden;
+}
+a{color:inherit;text-decoration:none}
+button{font:inherit}
+
+body::before{
+  content:"";
+  position:fixed; inset:0; z-index:-3; pointer-events:none;
+  background-image:
+    radial-gradient(circle at 12% 18%,rgba(255,255,255,.65) 0 1px,transparent 1.5px),
+    radial-gradient(circle at 73% 31%,rgba(0,239,255,.7) 0 1px,transparent 1.5px),
+    radial-gradient(circle at 44% 72%,rgba(255,202,40,.55) 0 1px,transparent 1.5px),
+    radial-gradient(circle at 88% 84%,rgba(255,255,255,.45) 0 1px,transparent 1.5px);
+  background-size:240px 210px,310px 270px,390px 340px,470px 410px;
+  opacity:.55;
+}
+.observatory-bg{
+  position:fixed; inset:0; z-index:-2; pointer-events:none; opacity:.7;
+  background:
+    linear-gradient(rgba(14,34,61,.25) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(14,34,61,.25) 1px,transparent 1px);
+  background-size:80px 80px;
+  mask-image:linear-gradient(to bottom,black,transparent 75%);
+}
+.noise{
+  position:fixed; inset:0; z-index:999; pointer-events:none; opacity:.025;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 160 160' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* top UI */
+.header{
+  position:fixed;top:0;left:0;right:0;height:62px;z-index:100;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 34px;
+  background:rgba(2,4,10,.72);
+  backdrop-filter:blur(16px);
+  border-bottom:1px solid rgba(29,59,95,.65);
+}
+.brand{display:flex;align-items:center;gap:10px;font:700 12px var(--mono);letter-spacing:.18em;color:var(--cyan)}
+.brand-dot{width:7px;height:7px;border-radius:50%;background:var(--cyan);box-shadow:0 0 16px var(--cyan);animation:pulse 2s infinite}
+.nav{display:flex;gap:24px;font:11px var(--mono);letter-spacing:.1em;color:#64748b}
+.nav a{transition:.25s}
+.nav a:hover,.nav a.active{color:var(--cyan)}
+.system{
+  display:flex;align-items:center;gap:8px;font:10px var(--mono);color:#64748b;
+}
+.system i{width:6px;height:6px;border-radius:50%;background:#48f3a2;box-shadow:0 0 10px #48f3a2}
+
+/* progress rail */
+.progress{
+  position:fixed;right:24px;top:50%;transform:translateY(-50%);
+  z-index:90;display:flex;flex-direction:column;align-items:center;gap:13px;
+}
+.progress-line{position:absolute;top:4px;bottom:4px;width:1px;background:#17314e;z-index:-1}
+.progress-dot{
+  width:7px;height:7px;border-radius:50%;background:#17314e;border:1px solid #2b4d70;
+  transition:.3s;cursor:pointer;
+}
+.progress-dot.active{width:10px;height:10px;background:var(--cyan);border-color:var(--cyan);box-shadow:0 0 15px var(--cyan)}
+.progress-label{
+  position:absolute;right:20px;white-space:nowrap;opacity:0;transform:translateX(6px);
+  font:9px var(--mono);color:var(--cyan);transition:.2s;pointer-events:none;
+}
+.progress-dot:hover .progress-label{opacity:1;transform:translateX(0)}
+
+/* layout */
+main{position:relative}
+.section{padding:120px 7vw 120px;border-bottom:1px solid rgba(19,43,74,.75)}
+.wrap{width:min(1180px,100%);margin:0 auto}
+.scope-tag{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:5px 10px;border:1px solid rgba(0,239,255,.5);
+  background:rgba(0,239,255,.055);color:var(--cyan);
+  font:10px var(--mono);letter-spacing:.18em;
+}
+.scope-tag::before{content:"";width:5px;height:5px;border-radius:50%;background:currentColor;box-shadow:0 0 8px currentColor}
+h1,h2,h3,p{margin-top:0}
+h1{
+  margin:28px 0 26px;
+  font-size:clamp(58px,10vw,142px);
+  line-height:.84;letter-spacing:-.07em;font-weight:200;
+  text-shadow:0 0 45px rgba(0,239,255,.2);
+}
+h2{font-size:clamp(30px,4.5vw,58px);line-height:1.12;letter-spacing:-.04em;font-weight:300;margin:20px 0 45px}
+h3{font-weight:500}
+.lead{max-width:760px;color:#9aa9bb;font-size:clamp(16px,1.4vw,20px);font-weight:300}
+.mono{font-family:var(--mono)}
+.muted{color:var(--dim)}
+
+/* hero */
+.hero{min-height:100vh;display:flex;align-items:center;padding-top:120px!important;overflow:hidden}
+.hero-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:40px;align-items:center}
+.hero-copy{position:relative;z-index:2}
+.hero-kicker{font:11px var(--mono);color:#71829a;letter-spacing:.16em;margin-top:25px}
+.hero-actions{display:flex;gap:12px;margin-top:34px;flex-wrap:wrap}
+.btn{
+  padding:11px 16px;border:1px solid #244666;background:rgba(5,12,22,.7);
+  color:#c8d5e5;font:11px var(--mono);letter-spacing:.08em;transition:.25s;
+}
+.btn.primary{border-color:var(--cyan);color:var(--cyan);box-shadow:inset 0 0 22px rgba(0,239,255,.06)}
+.btn:hover{transform:translateY(-2px);border-color:var(--cyan);color:#fff}
+
+.orbit-stage{
+  min-height:570px;position:relative;display:grid;place-items:center;
+  perspective:900px;
+}
+.orbit{
+  position:absolute;border:1px solid rgba(0,239,255,.2);border-radius:50%;
+  transform:rotateX(65deg) rotateZ(-18deg);box-shadow:0 0 30px rgba(0,239,255,.04);
+}
+.o1{width:430px;height:430px}.o2{width:300px;height:300px;border-color:rgba(255,202,40,.2);transform:rotateX(65deg) rotateZ(28deg)}
+.star{
+  position:absolute;width:54px;height:54px;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,#fff 0 5%,#9ffaff 14%,#00efff 42%,rgba(0,239,255,.05) 70%);
+  box-shadow:0 0 30px #00efff,0 0 100px rgba(0,239,255,.35);
+}
+.star.b{width:28px;height:28px;background:radial-gradient(circle,#fff 0 8%,#ffe9a0 20%,#ffca28 50%,transparent 72%);box-shadow:0 0 25px #ffca28;animation:orbit 8s linear infinite}
+.star.a{animation:float 4s ease-in-out infinite}
+.heart-wave{
+  position:absolute;width:360px;height:90px;opacity:.7;
+  filter:drop-shadow(0 0 8px rgba(0,239,255,.55));
+}
+.heart-wave path{fill:none;stroke:var(--cyan);stroke-width:1.4;stroke-dasharray:5 8;animation:dash 7s linear infinite}
+.hero-data{
+  position:absolute;right:2%;bottom:12%;padding:12px 15px;
+  border:1px solid #1d3b5f;background:rgba(3,8,16,.7);backdrop-filter:blur(10px);
+  font:10px var(--mono);color:#708198;
+}
+.hero-data strong{display:block;color:var(--cyan);font-size:13px;margin-bottom:4px}
+
+/* components */
+.astro-box{
+  background:linear-gradient(135deg,rgba(8,18,32,.78),rgba(4,10,19,.52));
+  border:1px solid var(--line);padding:30px;position:relative;
+  backdrop-filter:blur(8px);
+}
+.astro-box::before,.astro-box::after{content:"";position:absolute;width:10px;height:10px}
+.astro-box::before{top:-1px;left:-1px;border-top:2px solid var(--cyan);border-left:2px solid var(--cyan)}
+.astro-box::after{bottom:-1px;right:-1px;border-bottom:2px solid var(--cyan);border-right:2px solid var(--cyan)}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+.split-intro{display:grid;grid-template-columns:.75fr 1.25fr;gap:60px;align-items:start}
+.number{
+  font:clamp(60px,8vw,110px) var(--mono);font-weight:700;color:rgba(0,239,255,.08);
+  line-height:.8;
+}
+.quote{
+  margin-top:20px;padding-left:18px;border-left:2px solid var(--cyan);
+  color:#d7e2ef;font-size:18px;
+}
+.data-card{
+  display:grid;grid-template-columns:130px 1fr;gap:18px;
+  padding:17px 0;border-bottom:1px dashed #18324f;
+}
+.data-card:last-child{border-bottom:0}
+.data-key{font:10px var(--mono);color:var(--cyan);letter-spacing:.08em}
+.data-val{font-size:13px;color:#aab7c7}
+
+/* timeline */
+.flow-timeline{position:relative;display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:20px}
+.flow-timeline::before{content:"";position:absolute;left:8%;right:8%;top:29px;height:1px;background:linear-gradient(90deg,transparent,var(--cyan),var(--amber),transparent);opacity:.5}
+.timeline-item{
+  position:relative;padding:25px 20px 22px;border:1px solid #17314e;
+  background:rgba(7,16,29,.55);min-height:210px;transition:.3s;
+}
+.timeline-item:hover{transform:translateY(-7px);border-color:#2a6684;box-shadow:0 20px 50px rgba(0,0,0,.25)}
+.timeline-num{font:10px var(--mono);color:var(--amber);margin-bottom:36px}
+.timeline-item h3{font-size:17px;margin-bottom:8px}
+.timeline-item p{font-size:12px;color:#73849a;margin:0}
+
+/* philosophy */
+.intent-grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:#17314e;border:1px solid #17314e}
+.intent{
+  background:rgba(5,12,22,.75);padding:34px;min-height:230px;
+}
+.intent .icon{font:28px var(--mono);color:var(--cyan);margin-bottom:35px}
+.intent.amber .icon{color:var(--amber)}
+.intent h3{margin-bottom:12px}
+.intent p{font-size:14px;color:#8999ac}
+
+/* pipeline */
+.pipeline{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+.pipeline .astro-box{min-height:300px}
+.tech-spec{list-style:none;padding:0;margin:0}
+.tech-spec li{padding:15px 0;border-bottom:1px dashed #17314e;display:grid;grid-template-columns:120px 1fr;gap:15px}
+.tech-spec li:last-child{border-bottom:0}
+.tech-spec .label{font:11px var(--mono);color:var(--cyan)}
+.tech-spec .value{font-size:13px;color:#aebbc9}
+
+/* visual module */
+.visual-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start}
+.viewfinder{
+  position:relative;overflow:hidden;aspect-ratio:16 / 9;
+  border:1px solid #17314e;background:
+    radial-gradient(circle at 50% 45%,rgba(0,239,255,.13),transparent 26%),
+    linear-gradient(145deg,#030812,#07111e);
+  display:flex;align-items:center;justify-content:center;text-align:center;
+}
+.viewfinder.large{aspect-ratio:16 / 9}
+.viewfinder img,
+.viewfinder video{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  background:#02040a;
+  z-index:1;
+}
+.viewfinder img{z-index:1}
+.viewfinder video{z-index:1}
+.viewfinder .cross,
+.viewfinder .scan{z-index:3}
+.viewfinder::before{
+  content:"";position:absolute;inset:12px;border:1px solid rgba(0,239,255,.08);
+  pointer-events:none;
+}
+.cross{position:absolute;width:20px;height:20px;border-color:var(--cyan);opacity:.75}
+.cross.tl{top:20px;left:20px;border-top:1px solid;border-left:1px solid}
+.cross.br{bottom:20px;right:20px;border-bottom:1px solid;border-right:1px solid}
+.scan{
+  position:absolute;left:0;right:0;height:1px;background:var(--cyan);opacity:.18;
+  animation:scan 4s linear infinite;
+}
+.concept-orbit{width:180px;height:180px;border:1px solid rgba(0,239,255,.25);border-radius:50%;transform:rotateX(65deg);position:absolute}
+.concept-orbit::after{content:"";position:absolute;width:12px;height:12px;border-radius:50%;background:var(--amber);box-shadow:0 0 22px var(--amber);top:2px;left:50%;transform:translateX(-50%)}
+.module{
+  margin-top:18px;display:grid;grid-template-columns:1fr auto;gap:20px;align-items:center;
+  padding:22px 25px;border:1px solid #17314e;background:rgba(7,16,29,.6)
+}
+.module-tag{font:10px var(--mono);color:var(--cyan);letter-spacing:.12em}
+.module p{font-size:13px;color:#8b9aac;margin:8px 0 0}
+.module-status{font:10px var(--mono);color:#48f3a2;border:1px solid rgba(72,243,162,.35);padding:6px 9px}
+
+/* footer */
+footer{padding:32px 7vw;display:flex;justify-content:space-between;gap:20px;color:#52647a;font:10px var(--mono);letter-spacing:.04em}
+
+/* reveal */
+.reveal{opacity:0;transform:translateY(28px);transition:opacity .8s ease,transform .8s ease}
+.reveal.visible{opacity:1;transform:none}
+
+/* animations */
+@keyframes pulse{0%,100%{opacity:1;box-shadow:0 0 8px var(--cyan)}50%{opacity:.45;box-shadow:0 0 20px var(--cyan)}}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+@keyframes orbit{to{transform:rotate(360deg) translateX(155px) rotate(-360deg)}}
+@keyframes dash{to{stroke-dashoffset:-80}}
+@keyframes scan{from{top:-2%}to{top:102%}}
+
+@media(max-width:900px){
+  .nav,.system{display:none}
+  .header{padding:0 18px}
+  .progress{display:none}
+  .hero-grid,.split-intro,.two-col,.pipeline,.visual-grid{grid-template-columns:1fr}
+  .orbit-stage{min-height:420px;order:-1}
+  .o1{width:320px;height:320px}.o2{width:220px;height:220px}
+  .flow-timeline{grid-template-columns:1fr 1fr}
+  .flow-timeline::before{display:none}
+  .section{padding:90px 6vw}
+  h1{font-size:clamp(54px,18vw,100px)}
+}
+@media(max-width:560px){
+  .flow-timeline,.intent-grid{grid-template-columns:1fr}
+  .orbit-stage{min-height:350px;transform:scale(.82)}
+  .data-card{grid-template-columns:1fr}
+  .tech-spec li{grid-template-columns:1fr}
+  footer{flex-direction:column}
+}
+
+/* unified log styling */
+.flow-timeline.six-phase{grid-template-columns:repeat(3,1fr)}
+.flow-timeline.six-phase::before{left:7%;right:7%;top:29px}
+.future-input{
+  margin-top:56px;
+  padding-top:30px;
+  border-top:1px solid rgba(19,43,74,.75);
+}
+.future-input .arch-kicker{color:var(--amber)}
+.future-input h3{font-size:18px;font-weight:400;margin:0 0 10px;color:#edf5ff}
+.future-input p{max-width:820px;margin:0;color:#8b9aac;font-size:14px;line-height:1.8}
+@media(max-width:900px){
+  .flow-timeline.six-phase{grid-template-columns:1fr 1fr}
+}
+@media(max-width:560px){
+  .flow-timeline.six-phase{grid-template-columns:1fr}
+}
+
+.viewfinder video,
+.viewfinder img{
+  width:100%;
+  height:100%;
+  position:absolute;
+  inset:0;
+  object-fit:contain;
+  background:#02040a;
+}
+.viewfinder video{display:block}
+.viewfinder img{display:block}
+
+
+.architecture-grid{display:grid;grid-template-columns:1fr 1fr;gap:72px}
+.arch-row,.reason-row{border-top:1px solid rgba(255,255,255,.13);padding:28px 0}
+.arch-row:last-child,.reason-row:last-child{border-bottom:1px solid rgba(255,255,255,.13)}
+.arch-kicker{display:block;font:11px var(--mono);letter-spacing:.15em;color:#686868;margin-bottom:15px}
+.arch-row strong{display:block;font-size:18px;font-weight:400;color:#f2f2f2;margin-bottom:9px}
+.arch-row span:last-child{font-size:16px;color:#858585}
+.reason-row p{margin:0;color:#a9a9a9;font-size:16px;line-height:1.8}
+.state-grid{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid rgba(255,255,255,.12)}
+.state-card{min-height:210px;padding:36px 30px;border-right:1px solid rgba(255,255,255,.12);border-bottom:1px solid rgba(255,255,255,.12)}
+.state-card:nth-child(3n){border-right:0}
+.state-card:nth-child(n+4){border-bottom:0}
+.state-card span{display:block;font:11px var(--mono);letter-spacing:.14em;color:#666;margin-bottom:38px}
+.state-card strong{display:block;font-size:18px;font-weight:400;color:#f1f1f1;margin-bottom:18px}
+.state-card p{margin:0;color:#777;font-size:15px;line-height:1.7}
+.priority-question{padding:42px 0 55px;border-top:1px solid rgba(255,255,255,.14);border-bottom:1px solid rgba(255,255,255,.14);font-size:clamp(20px,2.2vw,30px);line-height:1.55;color:#ddd}
+.priority-question em{font-style:normal;color:#b7cce5}
+.priority-list{margin-top:45px;border-top:1px solid rgba(255,255,255,.12)}
+.priority-row{display:grid;grid-template-columns:70px 240px 1fr;align-items:center;gap:20px;padding:24px 0;border-bottom:1px solid rgba(255,255,255,.12)}
+.priority-row>span{font:11px var(--mono);color:#555}
+.priority-row strong{font-size:18px;font-weight:500;color:#e5e5e5}
+.priority-row p{margin:0;color:#777;font-size:15px}
+.final-message h2{font-size:clamp(30px,4.5vw,58px);line-height:1.12;letter-spacing:-.04em;font-weight:300}
+.final-copy{max-width:760px;color:#9aa9bb;font-size:clamp(16px,1.4vw,20px);font-weight:300;line-height:1.75;margin:45px 0 80px}
+.final-line{font-size:clamp(30px,4.5vw,58px);line-height:1.12;letter-spacing:-.04em;font-weight:300;color:#f4f5ff}
+.optional-section{border-bottom:0}
+.optional-copy{max-width:900px;color:#999;font-size:18px;line-height:1.9;margin:0 0 48px}
+.optional-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+.optional-card{border-top:1px solid rgba(255,255,255,.15);border-bottom:1px solid rgba(255,255,255,.15);padding:30px 0}
+.optional-card strong{display:block;font-size:18px;font-weight:400;color:#eee;margin-bottom:10px}
+.optional-card p{margin:0;color:#777;font-size:15px}
+
+
+.viewfinder video,.viewfinder img{
+  width:100%;height:100%;position:absolute;inset:0;
+  object-fit:contain;background:#02040a;
+}
+
+
+/* =========================================================
+   UNIFIED VISUAL SYSTEM
+   Keep the original content and interaction structure,
+   but bring every section back into the Observatory language.
+   ========================================================= */
+
+:root{
+  --section-line:rgba(19,43,74,.75);
+  --section-line-soft:rgba(29,59,95,.65);
+  --panel-soft:rgba(7,16,29,.58);
+  --panel-strong:rgba(8,18,32,.78);
+}
+
+/* Shared section rhythm */
+.section{
+  border-bottom:1px solid var(--section-line);
+}
+.section > .wrap{
+  position:relative;
+}
+.section > .wrap > .scope-tag{
+  margin-bottom:4px;
+}
+
+/* Keep heading hierarchy consistent with the opening section */
+h2{
+  max-width:920px;
+}
+h3{
+  font-size:17px;
+  line-height:1.4;
+}
+
+/* Unified content panels */
+.architecture-grid,
+.state-grid,
+.priority-list,
+.optional-grid{
+  border-color:var(--line);
+}
+
+.arch-row,
+.reason-row{
+  border-color:var(--line);
+  background:transparent;
+  transition:border-color .25s, background .25s;
+}
+.arch-row:hover,
+.reason-row:hover{
+  border-color:rgba(0,239,255,.28);
+  background:rgba(0,239,255,.025);
+}
+
+.arch-kicker{
+  color:var(--cyan);
+}
+
+.arch-row strong,
+.state-card strong,
+.optional-card strong{
+  color:#edf5ff;
+}
+
+.arch-row span:last-child,
+.reason-row p,
+.state-card p,
+.optional-card p{
+  color:#8b9aac;
+}
+
+/* State cards use the same dark glass / cyan corner language */
+.state-grid{
+  background:transparent;
+}
+.state-card{
+  min-height:190px;
+  padding:30px;
+  background:linear-gradient(135deg,rgba(8,18,32,.72),rgba(4,10,19,.5));
+  border-color:var(--line);
+  position:relative;
+  transition:.25s;
+}
+.state-card::before{
+  content:"";
+  position:absolute;
+  top:-1px;
+  left:-1px;
+  width:9px;
+  height:9px;
+  border-top:2px solid var(--cyan);
+  border-left:2px solid var(--cyan);
+  opacity:.7;
+}
+.state-card:hover{
+  border-color:#2a6684;
+  transform:translateY(-3px);
+  box-shadow:0 16px 40px rgba(0,0,0,.22);
+}
+.state-card span{
+  color:var(--cyan);
+}
+.state-card strong{
+  font-size:18px;
+  margin-bottom:15px;
+}
+
+/* Development priority becomes a Observatory data panel */
+.priority-question{
+  border-color:var(--line);
+  background:linear-gradient(135deg,rgba(8,18,32,.58),rgba(4,10,19,.38));
+  box-shadow:inset 0 0 40px rgba(0,239,255,.025);
+}
+.priority-question em{
+  color:var(--cyan2);
+}
+.priority-list{
+  border-top:1px solid var(--line);
+}
+.priority-row{
+  grid-template-columns:70px 220px 1fr;
+  padding:20px 0;
+  border-color:var(--line);
+}
+.priority-row > span{
+  color:var(--amber);
+}
+.priority-row strong{
+  color:#dce8f5;
+  font-size:15px;
+}
+.priority-row p{
+  color:#8b9aac;
+}
+
+/* Future input uses the same panel treatment */
+.future-input{
+  margin-top:48px;
+  padding:28px 30px;
+  border:1px solid var(--line);
+  background:linear-gradient(135deg,rgba(8,18,32,.72),rgba(4,10,19,.5));
+  position:relative;
+}
+.future-input::before{
+  content:"";
+  position:absolute;
+  top:-1px;
+  left:-1px;
+  width:10px;
+  height:10px;
+  border-top:2px solid var(--amber);
+  border-left:2px solid var(--amber);
+}
+.future-input .arch-kicker{
+  color:var(--amber);
+}
+.future-input h3{
+  color:#edf5ff;
+}
+.future-input p{
+  color:#8b9aac;
+}
+
+/* Prototype / exhibition area matches the observatory frame */
+.viewfinder,
+.module{
+  border-color:var(--line);
+  background:rgba(5,12,22,.68);
+}
+.viewfinder{
+  box-shadow:inset 0 0 35px rgba(0,239,255,.025);
+}
+.viewfinder::before{
+  border-color:rgba(0,239,255,.12);
+}
+.module{
+  transition:.25s;
+}
+.module:hover{
+  border-color:#2a6684;
+}
+
+/* Final message: same hierarchy, but intentionally quieter */
+.final-message{
+  background:
+    radial-gradient(circle at 50% 35%,rgba(0,239,255,.035),transparent 38%);
+}
+.final-message .final-copy{
+  color:#9aa9bb;
+}
+.final-line{
+  color:#edf5ff;
+  text-shadow:0 0 35px rgba(0,239,255,.08);
+}
+
+/* Footer belongs to the same instrument-panel language */
+footer{
+  border-top:0;
+  color:#52647a;
+}
+
+/* Consistent responsive behavior */
+@media(max-width:900px){
+  .priority-row{
+    grid-template-columns:55px 1fr;
+  }
+  .priority-row p{
+    grid-column:2;
+  }
+}
+@media(max-width:560px){
+  .state-card,
+  .future-input{
+    padding:24px;
+  }
+  .priority-row{
+    grid-template-columns:1fr;
+    gap:7px;
+  }
+  .priority-row p{
+    grid-column:auto;
+  }
+}
+
+
+.heartbeat-explainer{
+  margin:0 0 28px;
+  padding:28px 30px 30px;
+  border:1px solid var(--line);
+  border-left:2px solid rgba(0,239,255,.55);
+  background:linear-gradient(135deg,rgba(8,18,32,.68),rgba(4,10,19,.42));
+  position:relative;
+}
+.heartbeat-explainer h3{
+  margin:0 0 18px;
+  font-size:clamp(20px,2.2vw,28px);
+  font-weight:300;
+  color:#edf5ff;
+}
+.heartbeat-explainer .lead{
+  max-width:900px;
+  margin-bottom:14px;
+}
+.heartbeat-flow{
+  display:flex;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:10px 14px;
+  margin:24px 0 18px;
+  padding:15px 0;
+  border-top:1px solid rgba(19,43,74,.75);
+  border-bottom:1px solid rgba(19,43,74,.75);
+  font-family:var(--mono);
+  font-size:10px;
+  letter-spacing:.08em;
+  color:#7f93a9;
+}
+.heartbeat-flow span:first-child,
+.heartbeat-flow span:last-child{
+  color:var(--cyan);
+}
+.heartbeat-flow i{
+  color:var(--amber);
+  font-style:normal;
+}
+.heartbeat-note{
+  margin:0;
+  color:#7f8ea0;
+  font-size:13px;
+  line-height:1.8;
+}
+@media(max-width:560px){
+  .heartbeat-explainer{padding:23px 22px}
+  .heartbeat-flow{gap:8px 10px;line-height:1.5}
+}
+
+
+/* =========================================================
+   SCROLL REVEAL RESTORE + LOG 01 LAYOUT CLEANUP
+   ========================================================= */
+
+/* Keep the observer trigger on the section wrapper, but animate its contents. */
+.reveal{
+  opacity:1 !important;
+  transform:none !important;
+}
+.reveal > *{
+  opacity:0;
+  transform:translateY(22px);
+  transition:
+    opacity .72s ease,
+    transform .72s cubic-bezier(.2,.65,.2,1);
+}
+.reveal.visible > *{
+  opacity:1;
+  transform:translateY(0);
+}
+.reveal.visible > *:nth-child(1){transition-delay:.02s}
+.reveal.visible > *:nth-child(2){transition-delay:.10s}
+.reveal.visible > *:nth-child(3){transition-delay:.18s}
+.reveal.visible > *:nth-child(4){transition-delay:.26s}
+.reveal.visible > *:nth-child(5){transition-delay:.34s}
+
+/* LOG 01: one clear hierarchy instead of three unrelated blocks. */
+#basis .two-col{
+  grid-template-columns:1fr 1fr;
+  align-items:start;
+  gap:24px 28px;
+}
+#basis .heartbeat-explainer{
+  grid-column:2;
+  grid-row:1;
+  margin:0;
+  height:100%;
+  box-sizing:border-box;
+}
+#basis .astro-box{
+  grid-column:1 / -1;
+  grid-row:2;
+  margin-top:0;
+  padding:24px 28px;
+}
+
+/* Make the citation box read as a quiet source footer rather than another card. */
+#basis .astro-box > div[style*="font-size:15px"]{
+  font-size:14px !important;
+}
+#basis .astro-box p{
+  line-height:1.7 !important;
+}
+
+/* Give the scientific explainer and citation the same visual frame language. */
+#basis .heartbeat-explainer,
+#basis .astro-box{
+  background:linear-gradient(135deg,rgba(8,18,32,.66),rgba(4,10,19,.42));
+  border:1px solid var(--line);
+  box-shadow:none;
+}
+
+/* A single quiet astronomical divider between explanation and source. */
+#basis .astro-box::before{
+  width:28px;
+  height:1px;
+  top:-1px;
+  left:30px;
+  border:0;
+  background:var(--cyan);
+  box-shadow:0 0 10px rgba(0,239,255,.18);
+}
+#basis .astro-box::after{
+  width:28px;
+  height:1px;
+  bottom:-1px;
+  right:30px;
+  border:0;
+  background:var(--amber);
+  box-shadow:0 0 10px rgba(255,202,40,.12);
+}
+
+/* Preserve the subtle star atmosphere without making the section busy. */
+#basis::before{
+  opacity:.38;
+}
+
+/* Respect reduced-motion preferences. */
+@media(prefers-reduced-motion:reduce){
+  .reveal > *{
+    opacity:1;
+    transform:none;
+    transition:none;
+  }
+}
+
+@media(max-width:760px){
+  #basis .two-col{
+    grid-template-columns:1fr;
+  }
+  #basis .heartbeat-explainer,
+  #basis .astro-box{
+    grid-column:auto;
+    grid-row:auto;
+  }
+}
+
+
+/* LOG 01 layout refinement:
+   Keep the introductory explanation full-width, then stack
+   Heartbeat Star explanation and citations as clean lower panels. */
+#basis .two-col{
+  display:block;
+}
+#basis .two-col > div:first-child{
+  width:100%;
+  max-width:920px;
+  margin-bottom:32px;
+}
+#basis .heartbeat-explainer{
+  width:100%;
+  box-sizing:border-box;
+  margin:0 0 24px;
+}
+#basis .astro-box{
+  width:100%;
+  box-sizing:border-box;
+  margin:0;
+}
+#basis .heartbeat-explainer .lead{
+  max-width:1000px;
+}
+#basis .heartbeat-explainer .heartbeat-flow{
+  max-width:1000px;
+}
+@media(max-width:900px){
+  #basis .two-col > div:first-child{
+    max-width:none;
+    margin-bottom:24px;
+  }
+}
+
+</style>
+</head>
+<body>
+<div class="observatory-bg"></div>
+<div class="noise"></div>
+
+<header class="header">
+  <a class="brand" href="#top"><span class="brand-dot"></span>HEARTBEAT STAR :: OBSERVATORY</a>
+  <nav class="nav">
+    <a href="#basis">01 PHYSICS</a>
+    <a href="#flow">02 SEQUENCE</a>
+    <a href="#philosophy">03 INTENT</a>
+    <a href="#pipeline">04 PIPELINE</a>
+    <a href="#visuals">06 VISUALS</a>
+  </nav>
+  <div class="system"><i></i>SYSTEM ONLINE</div>
+</header>
+
+<div class="progress" aria-label="section progress">
+  <div class="progress-line"></div>
+  <a class="progress-dot active" href="#top"><span class="progress-label">00 / OVERVIEW</span></a>
+  <a class="progress-dot" href="#basis"><span class="progress-label">01 / PHYSICS</span></a>
+  <a class="progress-dot" href="#flow"><span class="progress-label">02 / SEQUENCE</span></a>
+  <a class="progress-dot" href="#philosophy"><span class="progress-label">03 / INTENT</span></a>
+  <a class="progress-dot" href="#pipeline"><span class="progress-label">04 / PIPELINE</span></a>
+  <a class="progress-dot" href="#visuals"><span class="progress-label">06 / VISUALS</span></a>
+</div>
+
+<main id="top">
+<section class="section hero">
+  <div class="wrap hero-grid">
+    <div class="hero-copy reveal">
+      <span class="scope-tag">INTERACTIVE OBSERVATORY PROJECT</span>
+      <h1>HEARTBEAT<br>STAR</h1>
+      <p class="lead">관객의 손끝을 성간 망원경으로 삼아 우주를 탐색하고,<br>두 별이 만날 때 발생하는 광도 변화와 파동을 경험하는 체감형 미디어아트.</p>
+    </div>
+
+    <div class="orbit-stage reveal">
+      <div class="orbit o1"></div>
+      <div class="orbit o2"></div>
+      <div class="star a"></div>
+      <div class="star b"></div>
+      <svg class="heart-wave" viewBox="0 0 360 90" aria-hidden="true">
+        <path d="M0 50 H95 L112 50 L124 20 L136 73 L148 43 L161 50 H220 L232 50 L244 28 L255 68 L268 50 H360"/>
+      </svg>
+      <div class="hero-data"><strong>LIVE CONCEPT</strong>ECCENTRIC BINARY / HEARTBEAT WAVE<br>INTERACTION : HAND MOTION</div>
+    </div>
+  </div>
+</section>
+
+
+<section class="section" id="basis">
+  <div class="wrap reveal">
+    <span class="scope-tag">LOG 01 / ASTROPHYSICS BASIS</span>
+    <h2>케플러 우주망원경이 관측한<br>별의 박동과 생명의 궤도.</h2>
+
+    <div class="two-col">
+      <div>
+        <p class="lead">천문학에서 <strong>'하트비트 스타(Heartbeat Star)'</strong>는 타원 궤도를 도는 쌍성계가 서로 가장 가까워질 때, 강한 중력적 상호작용으로 인해 변광 곡선이 사람의 심전도(ECG) 패턴처럼 요동치는 천체 현상입니다.</p>
+        <p class="lead">본 작품은 이 과학적 메커니즘을 시각적 서사의 근거로 삼아, <strong>"독립된 별이 타인의 궤도와 교차하는 순간 생명의 파동이 탄생한다"</strong>는 모티프를 전달합니다.</p>
+      </div>
+      <div class="heartbeat-explainer">
+        <div class="mono" style="font-size:12px;color:var(--cyan);margin-bottom:8px;">ASTRONOMICAL BASIS / HEARTBEAT STAR</div>
+        <h3>하트비트 스타란?</h3>
+        <p class="lead"><strong>두 별이 아주 긴 타원형 궤도로 서로를 돌고 있는 쌍성계</strong>를 떠올리면 됩니다. 평소에는 두 별이 멀리 떨어져 있다가, 궤도를 돌며 어느 순간 서로 아주 가까이 지나갑니다.</p>
+        <p class="lead">이때 가까워진 두 별이 서로를 강하게 끌어당기면서 별의 모양이 잠시 변하고, 우리가 보는 <strong>별의 밝기도 함께 변합니다.</strong> 이 밝기의 변화를 시간에 따라 기록하면 <strong>심장 박동처럼 보이는 독특한 모양</strong>이 나타나기 때문에 'Heartbeat Star'라고 부릅니다.</p>
+        <div class="heartbeat-flow">
+          <span>두 별이 공전합니다</span><i>→</i><span>가까워집니다</span><i>→</i><span>서로의 중력이 강해집니다</span><i>→</i><span>밝기가 변합니다</span>
+        </div>
+        <p class="heartbeat-note">본 작품은 이 실제 천문 현상에서 영감을 받아, <strong>별의 접근과 상호작용이 하나의 파동으로 이어지는 과정</strong>을 인터랙티브 미디어아트로 재해석합니다.</p>
+      </div>
+
+      <div class="astro-box">
+        <div class="mono" style="font-size:12px;color:var(--amber);margin-bottom:8px;">CITATIONS & DATA SOURCE</div>
+        <div style="font-size:15px;color:#fff;font-weight:500;margin-bottom:12px;">Kepler Heartbeat Binary Systems Research</div>
+        <p style="font-size:13px;color:#64748b;margin:0;">
+          Thompson, S. E., Everett, M., Mullally, F., et al. (2012). “A Class of Eccentric Binaries with Dynamic Tidal Distortions Discovered with Kepler.” <i>The Astrophysical Journal</i>, 753(1), 86. DOI: 10.1088/0004-637X/753/1/86.<br><br>
+          * Kepler 데이터에서 발견된 고이심률 쌍성계의 동적 조석 변형과 조석으로 유도된 맥동, 그리고 근접 시 나타나는 주기적 광도 변화를 작품의 시각적 모티프로 참고합니다.<br><br>
+          <span style="color:#fff;font-weight:500;">Additional Science Reference</span><br>
+          Rawls, M. (2014). “What’s in a Heartbeat?” <i>AstroBites</i>, August 27, 2014.
+          <a href="https://astrobites.org/2014/08/27/whats-in-a-heartbeat/" target="_blank" rel="noopener noreferrer" style="color:var(--cyan);text-decoration:none;">↗ Read article</a><br>
+          * 관련 천문학 개념을 설명하는 해설 자료
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+
+<section class="section" id="flow">
+  <div class="wrap reveal">
+    <span class="scope-tag">LOG 02 / OBSERVATION SEQUENCE</span>
+    <h2>관객의 움직임에 따라<br>우주의 상태가 변화합니다.</h2>
+
+    <div class="flow-timeline six-phase">
+      <article class="timeline-item">
+        <div class="timeline-num">PHASE 01 :: IDLE</div>
+        <h3>암전 진입</h3>
+        <p>관객이 없는 기본 상태에서 시작하며, 외부 시각 자극이 차단된 고요한 우주 미디어월 전면으로 입장합니다.</p>
+      </article>
+      <article class="timeline-item">
+        <div class="timeline-num">PHASE 02 :: DETECT</div>
+        <h3>관객 인식</h3>
+        <p>미디어월을 향해 손을 움직이면 Kinect가 관객을 인식하고 화면 속 시점과 상호작용을 시작합니다.</p>
+      </article>
+      <article class="timeline-item">
+        <div class="timeline-num">PHASE 03 :: EXPLORE</div>
+        <h3>성간 탐색</h3>
+        <p>손을 움직여 3D 깊이감 속 우주를 탐색하고 잊혀진 별을 찾아 접근합니다.</p>
+      </article>
+      <article class="timeline-item">
+        <div class="timeline-num">PHASE 04 :: STAR HOVER</div>
+        <h3>별과의 접근</h3>
+        <p>특정 별에 접근하면 별이 반응하며 다음 인터랙션을 유도합니다.</p>
+      </article>
+      <article class="timeline-item">
+        <div class="timeline-num">PHASE 05 :: ORBIT</div>
+        <h3>궤도 형성</h3>
+        <p>두 별이 서로의 궤도에 진입하며 관계를 형성하기 시작합니다.</p>
+      </article>
+      <article class="timeline-item">
+        <div class="timeline-num">PHASE 06 :: HEARTBEAT</div>
+        <h3>파동 발산</h3>
+        <p>두 별의 만남과 함께 화면 전체에 Heartbeat Wave가 발생하며 파동이 퍼져나갑니다.</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="philosophy">
+  <div class="wrap reveal">
+    <span class="scope-tag">LOG 03 / PROJECT INTENT</span>
+    <h2>손을 뻗어,<br>잊고 있던 별을 다시 만나다.</h2>
+
+    <div class="two-col">
+      <div class="astro-box">
+        <h3 style="font-size:18px;color:var(--cyan);margin-bottom:12px;">현대적 고립에 관한 질문</h3>
+        <p style="font-size:14px;color:#94a3b8;margin:0;">
+          매일 빠른 스크롤과 과도한 정보 속에서 살아가는 관객에게 "우주를 천천히 조망하고 별 하나에 손을 내밀어볼 여유"를 건넵니다.
+        </p>
+      </div>
+      <div class="astro-box">
+        <h3 style="font-size:18px;color:var(--amber);margin-bottom:12px;">관계가 만드는 공명</h3>
+        <p style="font-size:14px;color:#94a3b8;margin:0;">
+          수동적인 관람을 넘어 내가 접근했을 때 비로소 반응하는 우주를 체험하며 타인과 세계에 선뜻 다가서는 순간의 온기를 전달합니다.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+
+
+<section class="section tech-section" id="pipeline">
+  <div class="wrap reveal">
+    <span class="scope-tag">LOG 04 / SYSTEM ARCHITECTURE</span>
+    <h2>센서는 TouchDesigner,<br>세계는 Unity.</h2>
+
+    <div class="architecture-grid">
+      <div class="architecture-left">
+        <div class="arch-row">
+          <span class="arch-kicker">INPUT</span>
+          <strong>Kinect</strong>
+          <span>Skeleton / Hand Tracking</span>
+        </div>
+        <div class="arch-row">
+          <span class="arch-kicker">SENSOR PROCESSING</span>
+          <strong>TouchDesigner</strong>
+          <span>Hand XYZ · Filtering · Normalize · OSC</span>
+        </div>
+        <div class="arch-row">
+          <span class="arch-kicker">INTERACTION ENGINE</span>
+          <strong>Unity</strong>
+          <span>3D Universe · Camera · Star Logic · Orbit · State Machine</span>
+        </div>
+        <div class="arch-row">
+          <span class="arch-kicker">RETURN</span>
+          <strong>Spout + OSC</strong>
+          <span>Unity Render + Interaction State</span>
+        </div>
+        <div class="arch-row">
+          <span class="arch-kicker">FINAL VISUAL</span>
+          <strong>TouchDesigner</strong>
+          <span>Heartbeat Wave · Glow · Feedback · Final Composite</span>
+        </div>
+      </div>
+
+      <div class="architecture-right">
+        <div class="reason-row">
+          <span class="arch-kicker">WHY KINECT</span>
+          <p>관객의 손을 별도의 컨트롤러 없이 우주 탐색 인터페이스로 사용하기 위해.</p>
+        </div>
+        <div class="reason-row">
+          <span class="arch-kicker">WHY TOUCHDESIGNER</span>
+          <p>Kinect 데이터를 안정적으로 정리하고, 실시간 파동과 후처리 VFX를 담당하기 위해.</p>
+        </div>
+        <div class="reason-row">
+          <span class="arch-kicker">WHY UNITY</span>
+          <p>3차원 우주 공간, 카메라, 별의 거리와 궤도, 인터랙션 상태를 하나의 엔진에서 관리하기 위해.</p>
+        </div>
+        <div class="reason-row">
+          <span class="arch-kicker">WHY MEDIA WALL</span>
+          <p>작은 손의 움직임을 거대한 공간의 변화로 확장해 몰입감을 만들기 위해.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+
+
+
+<section class="section" id="development">
+  <div class="wrap reveal">
+    <span class="scope-tag">LOG 05 / DEVELOPMENT PRIORITY</span>
+    <h2>먼저 검증해야 하는 것은<br>VFX가 아니라 '재미'입니다.</h2>
+
+    <div class="priority-question">
+      Kinect로 인식한 손을 움직였을 때,<br>
+      정말로 <em>우주를 탐색하는 느낌</em>이 드는가?
+    </div>
+
+    <div class="priority-list">
+      <div class="priority-row"><span>P01</span><strong>Kinect → TD</strong><p>손 좌표를 추출하고 노이즈를 안정화합니다.</p></div>
+      <div class="priority-row"><span>P02</span><strong>TD → Unity</strong><p>OSC를 통해 손 좌표를 전달하고 Camera를 제어합니다.</p></div>
+      <div class="priority-row"><span>P03</span><strong>Unity Interaction</strong><p>별 탐색, 선택, 생성, 접근, Orbit을 구현합니다.</p></div>
+      <div class="priority-row"><span>P04</span><strong>Unity → TD</strong><p>Spout 기반으로 실시간 화면을 연동합니다.</p></div>
+      <div class="priority-row"><span>P05</span><strong>Final VFX</strong><p>Heartbeat Wave와 최종 시각효과를 구현합니다.</p></div>
+    </div>
+  </div>
+</section>
+
+
+<section class="section" id="visuals">
+  <div class="wrap reveal">
+    <span class="scope-tag">LOG 06 / PROTOTYPE & EXHIBITION VISUALS</span>
+    <h2>프로토타입과<br>전시 구상 이미지.</h2>
+
+    <div class="visual-grid">
+      <div class="viewfinder large">
+        <span class="cross tl"></span><span class="cross br"></span><span class="scan"></span>
+        <video controls muted loop playsinline preload="metadata">
+          <source src="프로토타입.mp4" type="video/mp4">
+          브라우저에서 영상을 재생할 수 없습니다.
+        </video>
+      </div>
+
+      <div class="viewfinder">
+        <span class="cross tl"></span><span class="cross br"></span>
+        <img src="예시이미지.png" alt="Heartbeat Star 전시장 구상 이미지">
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<section class="section optional-section" id="future-input">
+  <div class="wrap reveal">
+    <span class="scope-tag">LOG 07 / FUTURE INPUT</span>
+    <h2>심박 센서는<br>이후 구현합니다.</h2>
+
+    <div class="future-input">
+      <span class="arch-kicker">OPTIONAL INPUT</span>
+      <h3>Heartbeat Sensor</h3>
+      <p>기본 작품은 Kinect만으로 완결합니다. 이후 심박 센서의 측정 안정성을 검증한 뒤 실제 BPM을 Heartbeat Wave의 간격과 속도, 밝기에 연결합니다.</p>
+    </div>
+  </div>
+</section>
+
+<section class="section final-message" id="final-message">
+  <div class="wrap reveal">
+    <span class="scope-tag">LOG 08 / FINAL MESSAGE</span>
+    <h2>우리는 매일 수많은 것을<br>빠르게 지나칩니다.</h2>
+    <p class="final-copy">이 작품은 관객에게 멈추라고 말하지 않습니다. 대신 손을 뻗어 별 하나를 찾아가게 합니다. 그리고 그 별과 만난 순간 발생한 파동을 잠시 바라보게 합니다.</p>
+    <div class="final-line">손을 뻗어,<br>잊고 있던 별을 다시 만납니다.</div>
+  </div>
+</section>
+
+
+</main>
+
+<footer>
+  <div>SYSTEM STATUS :: ONLINE</div>
+  <div>HEARTBEAT STAR © 2026 INTERACTIVE OBSERVATORY</div>
+</footer>
+
+<script>
+const sections=[...document.querySelectorAll('main section[id]')];
+const dots=[...document.querySelectorAll('.progress-dot')];
+const nav=[...document.querySelectorAll('.nav a')];
+const observer=new IntersectionObserver((entries)=>{
+  entries.forEach(entry=>{
+    if(entry.isIntersecting){
+      const id=entry.target.id;
+      nav.forEach(a=>a.classList.toggle('active',a.getAttribute('href')==='#'+id));
+      const idx=sections.findIndex(s=>s.id===id)+1;
+      dots.forEach((d,i)=>d.classList.toggle('active',i===idx));
+    }
+  });
+},{rootMargin:'-35% 0px -50% 0px',threshold:0});
+sections.forEach(s=>observer.observe(s));
+
+const revealObserver=new IntersectionObserver((entries,observer)=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){
+      e.target.classList.add('visible');
+      observer.unobserve(e.target);
+    }
+  });
+},{threshold:.12,rootMargin:'0px 0px -8% 0px'});
+document.querySelectorAll('.reveal').forEach(el=>revealObserver.observe(el));
+</script>
+</body>
+</html>
